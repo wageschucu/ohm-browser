@@ -21,17 +21,19 @@
 EnglishMorphology {
 
   Verb = 
+    | KnownVerbStem -- kvsimple
     | GenericPrefix Verb -- gvprefix
     | Adj AdjToVerbSuffix -- vcomplexs
     | Verb VerbConjugationSuffix -- vconjugation
     | Verb VerbTenseSuffix -- vtense
-    | VerbStem -- nsimple
+    | UnknownVerbStem -- uvsimple
 
   Noun = 
+    | KnownNounStem -- knsimple
     | GenericPrefix Noun -- gnprefix
     | Noun NounPluralSuffix -- nplural
     | Verb VerbToNounSuffix -- ncomplexs
-    | NounStem -- nsimple
+    | UnknownNounStem -- unsimple
 
   Adj = 
     | Noun NounToAdjSuffix -- acomplexs
@@ -64,21 +66,26 @@ EnglishMorphology {
 
   NounStem = 
     | KnownNounStem  
-    | UnknownStem  
+    | UnknownNounStem  
 
   KnownNounStem = 
     | "nation"
 
   VerbStem = 
     | KnownVerbStem  
-    | UnknownStem  
+    | UnknownVerbStem  
 
   KnownVerbStem = 
     | "move"
 
-  UnknownStem = Letters
-  Letters = Letter+
-  Letter =  ~(NounToAdjSuffix | AdjToVerbSuffix | VerbToNounSuffix | NounPluralSuffix) ALetter
+  UnknownNounStem = NounLetters
+  NounLetters = NounLetter+
+  NounLetter =  ~(NounToAdjSuffix | NounPluralSuffix) ALetter
+
+  UnknownVerbStem = VerbLetters
+  VerbLetters = VerbLetter+
+  VerbLetter =  ~(VerbConjugationSuffix | VerbToNounSuffix) ALetter
+
   ALetter = letter
 }
 
