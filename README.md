@@ -1,2 +1,2 @@
-# ohm-browser
-Ohm tests
+# ohm-test
+Ohm morphology experiment

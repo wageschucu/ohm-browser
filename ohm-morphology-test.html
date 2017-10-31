@@ -1,12 +1,6 @@
 <!doctype html>
 <html>
 
-<!-- 
-	use require 
-	use ast helper
-	look at ast 
-
- -->
 <head>
     <title>ohm/js test demo</title>
     <meta charset=utf-8>
@@ -16,41 +10,33 @@
   let defaultWord=    
 //    "reinternationalization"
 //    "reinternationalization"
-    "nationalizations"
+//    "internutionalizations"
+    "reinternationalizations"
+//    "remove"
 </script>
-<!--     <script type="text/ohm-js">
-
-// An Ohm grammar for arithmetic expressions.
-// Syntax reference: https://github.com/cdglabs/ohm/blob/master/doc/syntax-reference.md
-Arithmetic {
-  Exp = AddExp
-  AddExp = AddExp "+" PriExp  -- plus
-         | AddExp "-" PriExp  -- minus
-         | PriExp
-  PriExp = "(" Exp ")"  -- paren
-         | number
-         | token
-  number = digit+
-  token = "hi"
-}
-    </script> -->
 
     <script type="text/ohm-js">
 
-// An Ohm grammar for arithmetic expressions.
-// Syntax reference: https://github.com/cdglabs/ohm/blob/master/doc/syntax-reference.md
 EnglishMorphology {
 
+  Verb = 
+    | GenericPrefix Verb -- gvprefix
+    | Adj AdjToVerbSuffix -- vcomplexs
+    | Verb VerbTenseSuffix -- nplural
+    | VerbStem -- nsimple
+
   Noun = 
+    | GenericPrefix Noun -- gnprefix
     | Verb VerbToNounSuffix -- ncomplexs
     | Noun NounPluralSuffix -- nplural
     | NounStem -- nsimple
 
-  Verb = 
-    | Adj AdjToVerbSuffix -- vcomplexs
-
   Adj = 
     | Noun NounToAdjSuffix -- acomplexs
+
+  GenericPrefix = 
+    | "inter"
+    | "re"
 
   NounToAdjSuffix = 
     | "al"
@@ -58,6 +44,10 @@ EnglishMorphology {
   NounPluralSuffix = 
     | "es"
     | "s"
+
+  VerbTenseSuffix = 
+    | "ed"
+    | "d"
 
   AdjToVerbSuffix = 
     | "ize"
@@ -73,11 +63,19 @@ EnglishMorphology {
   KnownNounStem = 
     | "nation"
 
+  VerbStem = 
+    | KnownVerbStem  
+    | UnknownStem  
+
+  KnownVerbStem = 
+    | "move"
+
   UnknownStem = Letters
   Letters = Letter+
-  Letter =  ~(NounToAdjSuffix | AdjToVerbSuffix| VerbToNounSuffix) ALetter
+  Letter =  ~(NounToAdjSuffix | AdjToVerbSuffix| VerbToNounSuffix|NounPluralSuffix) ALetter
   ALetter = letter
 }
+
     </script>
 </head>
 
@@ -106,16 +104,22 @@ EnglishMorphology {
     document.getElementById('input').onblur = function(e){
     	let word = document.getElementById('input').value 
 
-	    var result;
-	    var m = g.match(word);
-	    if (m.succeeded()) {
-	        //result = "ok"; // Evaluate the expression.
-	        result = semantics(m).eval(); // Evaluate the expression.
-	        result = JSON.stringify(result._node, null, 2)
-	    } else {
-	        result = m.message; // Extract the error message.
-	    }
-	    document.getElementById('result').textContent = result;
+      let result="";
+      ["Noun","Verb","Adj"].forEach(goal=>{ 
+         result += "\n-----------\n" + goal + "\n---------\n"
+  	    let m = g.match(word, goal);
+  	    if (m.succeeded()) {
+           result += "Success\n" 
+  	        //result = "ok"; // Evaluate the expression.
+  	        let res  = semantics(m).eval(); // Evaluate the expression.
+  	        result += JSON.stringify(res._node, null, 2)
+  	    } else {
+           result += "Failed\n" 
+  	        result += "\n" + m.message; // Extract the error message.
+            result += "\n" + JSON.stringify(g.trace(word, goal).bindings, null, 2)
+  	    }
+      })
+      document.getElementById('result').textContent = result;
     };
 
     document.getElementById('input').blur()
