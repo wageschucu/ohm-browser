@@ -11,7 +11,8 @@
 //    "reinternationalization"
 //    "reinternationalization"
 //    "internutionalizations"
-    "reinternationalizations"
+//    "reinternationalizations"
+    "nutional"
 //    "remove"
 </script>
 
@@ -22,13 +23,14 @@ EnglishMorphology {
   Verb = 
     | GenericPrefix Verb -- gvprefix
     | Adj AdjToVerbSuffix -- vcomplexs
-    | Verb VerbTenseSuffix -- nplural
+    | Verb VerbConjugationSuffix -- vconjugation
+    | Verb VerbTenseSuffix -- vtense
     | VerbStem -- nsimple
 
   Noun = 
     | GenericPrefix Noun -- gnprefix
-    | Verb VerbToNounSuffix -- ncomplexs
     | Noun NounPluralSuffix -- nplural
+    | Verb VerbToNounSuffix -- ncomplexs
     | NounStem -- nsimple
 
   Adj = 
@@ -48,6 +50,10 @@ EnglishMorphology {
   VerbTenseSuffix = 
     | "ed"
     | "d"
+
+  VerbConjugationSuffix = 
+    | "es"
+    | "s"
 
   AdjToVerbSuffix = 
     | "ize"
@@ -72,7 +78,7 @@ EnglishMorphology {
 
   UnknownStem = Letters
   Letters = Letter+
-  Letter =  ~(NounToAdjSuffix | AdjToVerbSuffix| VerbToNounSuffix|NounPluralSuffix) ALetter
+  Letter =  ~(NounToAdjSuffix | AdjToVerbSuffix | VerbToNounSuffix | NounPluralSuffix) ALetter
   ALetter = letter
 }
 
@@ -103,23 +109,29 @@ EnglishMorphology {
     document.getElementById('input').value = defaultWord // "commonality"
     document.getElementById('input').onblur = function(e){
     	let word = document.getElementById('input').value 
-
-      let result="";
+      let resMap = [];
       ["Noun","Verb","Adj"].forEach(goal=>{ 
+        let result="";
          result += "\n-----------\n" + goal + "\n---------\n"
   	    let m = g.match(word, goal);
-  	    if (m.succeeded()) {
+        let success = m.succeeded()
+  	    if (success) {
            result += "Success\n" 
   	        //result = "ok"; // Evaluate the expression.
   	        let res  = semantics(m).eval(); // Evaluate the expression.
   	        result += JSON.stringify(res._node, null, 2)
   	    } else {
            result += "Failed\n" 
-  	        result += "\n" + m.message; // Extract the error message.
+           try {
+    	        result += "\n" +  m.message; // Extract the error message.
+            } catch( e) {
+              result += "\n" +e 
+            }
             result += "\n" + JSON.stringify(g.trace(word, goal).bindings, null, 2)
-  	    }
+        }
+        resMap.push( {success:success, goal:goal, result:result})
       })
-      document.getElementById('result').textContent = result;
+      document.getElementById('result').textContent = resMap.sort((a,b)=>a.success?-1:1).reduce((out, res)=>{ out+=res.goal+" - "+res.success+"\n"; return out; }, "") + resMap.sort((a,b)=>a.success?-1:1).reduce((out, res)=>{ out+=res.result; return out; }, "");
     };
 
     document.getElementById('input').blur()
