@@ -13,7 +13,10 @@
     <script type="text/javascript" src="ohm.js"></script>
 
 <script type="text/javascript" >
-  let defaultWord=    "reinternationalization"
+  let defaultWord=    
+//    "reinternationalization"
+//    "reinternationalization"
+    "nationalizations"
 </script>
 <!--     <script type="text/ohm-js">
 
@@ -37,33 +40,42 @@ Arithmetic {
 // An Ohm grammar for arithmetic expressions.
 // Syntax reference: https://github.com/cdglabs/ohm/blob/master/doc/syntax-reference.md
 EnglishMorphology {
-  Word = 
-    | Prefix Word -- complexp
-    | Word Suffix -- complexs
-    | Stem -- simple
-  Prefix = 
-    | "re"
-    | "com"
-    | "inter"
-    | "in"
-  Suffix = 
+
+  Noun = 
+    | Verb VerbToNounSuffix -- ncomplexs
+    | Noun NounPluralSuffix -- nplural
+    | NounStem -- nsimple
+
+  Verb = 
+    | Adj AdjToVerbSuffix -- vcomplexs
+
+  Adj = 
+    | Noun NounToAdjSuffix -- acomplexs
+
+  NounToAdjSuffix = 
+    | "al"
+
+  NounPluralSuffix = 
+    | "es"
+    | "s"
+
+  AdjToVerbSuffix = 
     | "ize"
     | "iz"
-    | "ity"
-    | "ty"
-    | "ly"
-    | "y"
-    | "al"
+
+  VerbToNounSuffix = 
     | "ation"
-    | "ion"
-  Stem = KnownStem  
-    | UnknownStem -- unknown
-  KnownStem = 
-    | "love"
+
+  NounStem = 
+    | KnownNounStem  
+    | UnknownStem  
+
+  KnownNounStem = 
     | "nation"
+
   UnknownStem = Letters
   Letters = Letter+
-  Letter =  ~Suffix ALetter
+  Letter =  ~(NounToAdjSuffix | AdjToVerbSuffix| VerbToNounSuffix) ALetter
   ALetter = letter
 }
     </script>
@@ -79,7 +91,13 @@ EnglishMorphology {
     // Define an operation named 'eval' which evaluates the expression.
     // See https://github.com/cdglabs/ohm/blob/master/doc/api-reference.md#semantics
     var semantics = g.createSemantics().addOperation('eval', {
-        Word: function(word) {
+        Adj: function(word) {
+            return word;
+        },
+        Noun: function(word) {
+            return word;
+        },
+        Verb: function(word) {
             return word;
         },
     });
