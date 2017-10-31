@@ -1,0 +1,18 @@
+ohm
+morphology
+
+// noun
+compound = compound word
+	| word 
+
+word = prefix word
+	| stem
+
+prefix = "re"
+	| "com"
+	| "inter"
+	| "in"
+	| "out"
+	| "under"
+
+stem = letter+

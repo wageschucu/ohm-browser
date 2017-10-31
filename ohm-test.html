@@ -1,0 +1,108 @@
+<!doctype html>
+<html>
+
+<!-- 
+	use require 
+	use ast helper
+	look at ast 
+
+ -->
+<head>
+    <title>ohm/js test demo</title>
+    <meta charset=utf-8>
+    <script type="text/javascript" src="ohm.js"></script>
+
+<script type="text/javascript" >
+  let defaultWord=    "reinternationalization"
+</script>
+<!--     <script type="text/ohm-js">
+
+// An Ohm grammar for arithmetic expressions.
+// Syntax reference: https://github.com/cdglabs/ohm/blob/master/doc/syntax-reference.md
+Arithmetic {
+  Exp = AddExp
+  AddExp = AddExp "+" PriExp  -- plus
+         | AddExp "-" PriExp  -- minus
+         | PriExp
+  PriExp = "(" Exp ")"  -- paren
+         | number
+         | token
+  number = digit+
+  token = "hi"
+}
+    </script> -->
+
+    <script type="text/ohm-js">
+
+// An Ohm grammar for arithmetic expressions.
+// Syntax reference: https://github.com/cdglabs/ohm/blob/master/doc/syntax-reference.md
+EnglishMorphology {
+  Word = 
+    | Prefix Word -- complexp
+    | Word Suffix -- complexs
+    | Stem -- simple
+  Prefix = 
+    | "re"
+    | "com"
+    | "inter"
+    | "in"
+  Suffix = 
+    | "ize"
+    | "iz"
+    | "ity"
+    | "ty"
+    | "ly"
+    | "y"
+    | "al"
+    | "ation"
+    | "ion"
+  Stem = KnownStem  
+    | UnknownStem -- unknown
+  KnownStem = 
+    | "love"
+    | "nation"
+  UnknownStem = Letters
+  Letters = Letter+
+  Letter =  ~Suffix ALetter
+  ALetter = letter
+}
+    </script>
+</head>
+
+<body>
+    <input id="input" type="text"></inpjt>
+    <pre id="result"></pre>
+    <script type="text/javascript">
+    // Instantiate the grammar defined above.
+    var g = ohm.grammarFromScriptElement();
+
+    // Define an operation named 'eval' which evaluates the expression.
+    // See https://github.com/cdglabs/ohm/blob/master/doc/api-reference.md#semantics
+    var semantics = g.createSemantics().addOperation('eval', {
+        Word: function(word) {
+            return word;
+        },
+    });
+
+    document.getElementById('input').value = defaultWord // "commonality"
+    document.getElementById('input').onblur = function(e){
+    	let word = document.getElementById('input').value 
+
+	    var result;
+	    var m = g.match(word);
+	    if (m.succeeded()) {
+	        //result = "ok"; // Evaluate the expression.
+	        result = semantics(m).eval(); // Evaluate the expression.
+	        result = JSON.stringify(result._node, null, 2)
+	    } else {
+	        result = m.message; // Extract the error message.
+	    }
+	    document.getElementById('result').textContent = result;
+    };
+
+    document.getElementById('input').blur()
+
+    </script>
+</body>
+
+</html>
