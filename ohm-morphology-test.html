@@ -12,7 +12,7 @@
 //    "reinternationalization"
 //    "internutionalizations"
 //    "reinternationalizations"
-    "nutional"
+    "nationalizations"
 //    "remove"
 </script>
 
@@ -20,73 +20,61 @@
 
 EnglishMorphology {
 
-  Verb = 
-    | KnownVerbStem -- kvsimple
-    | GenericPrefix Verb -- gvprefix
-    | Adj AdjToVerbSuffix -- vcomplexs
-    | Verb VerbConjugationSuffix -- vconjugation
-    | Verb VerbTenseSuffix -- vtense
-    | UnknownVerbStem -- uvsimple
+word = 
+  | noun
+  | verb 
+  | adj 
 
-  Noun = 
-    | KnownNounStem -- knsimple
-    | GenericPrefix Noun -- gnprefix
-    | Noun NounPluralSuffix -- nplural
-    | Verb VerbToNounSuffix -- ncomplexs
-    | UnknownNounStem -- unsimple
+noun = 
+  | noun nounPlurlSuffixes -- nounPlurlSuffixesRule
+  | verb verbToNounSuffixes -- verbToNounSuffixesRule
+  | nounStem -- nounStem
 
-  Adj = 
-    | Noun NounToAdjSuffix -- acomplexs
+adj = 
+  | noun nounToAdjSuffixes -- nounToAdjSuffixesRule
+  | adjStem -- adjStem
 
-  GenericPrefix = 
-    | "inter"
-    | "re"
+verb = 
+  | adj adjToVerbSuffixes -- adjToVerbSuffixesRule
+  | verbStem -- verbStem
+  | verb verbPastSuffixes -- verbPastSuffixesRule
 
-  NounToAdjSuffix = 
-    | "al"
+verbToNounSuffixes = 
+  |"ion" 
+  | "ation"
 
-  NounPluralSuffix = 
-    | "es"
-    | "s"
+nounPlurlSuffixes = 
+  | "es" 
+  | "s"
 
-  VerbTenseSuffix = 
-    | "ed"
-    | "d"
+nounToAdjSuffixes = 
+  | "al" 
 
-  VerbConjugationSuffix = 
-    | "es"
-    | "s"
+adjToVerbSuffixes = 
+  |"ize" 
+  | "iz" 
 
-  AdjToVerbSuffix = 
-    | "ize"
-    | "iz"
+verbPastSuffixes = 
+  | "ed" 
+  | "d"
 
-  VerbToNounSuffix = 
-    | "ation"
+nounStem = knownNounStem | unknownNounStem
+verbStem = knownVerbStem | unknownVerbStem
+adjStem = knownAdjStem | unknownAdjStem
 
-  NounStem = 
-    | KnownNounStem  
-    | UnknownNounStem  
+knownVerbStem = "love" | "nat"
+knownNounStem = "bike"
+knownAdjStem = "black"
 
-  KnownNounStem = 
-    | "nation"
+unknownVerbStem = (~verbSuffixes letter)+
+verbSuffixes = (adjToVerbSuffixes|verbPastSuffixes)* ~letter
 
-  VerbStem = 
-    | KnownVerbStem  
-    | UnknownVerbStem  
+unknownNounStem = (~nounSuffixes letter)+
+nounSuffixes = (verbToNounSuffixes|nounPlurlSuffixes)* ~letter
 
-  KnownVerbStem = 
-    | "move"
+unknownAdjStem = (~adjSuffixes letter)+
+adjSuffixes = (nounToAdjSuffixes)* ~letter
 
-  UnknownNounStem = NounLetters
-  NounLetters = NounLetter+
-  NounLetter =  ~(NounToAdjSuffix | NounPluralSuffix) ALetter
-
-  UnknownVerbStem = VerbLetters
-  VerbLetters = VerbLetter+
-  VerbLetter =  ~(VerbConjugationSuffix | VerbToNounSuffix) ALetter
-
-  ALetter = letter
 }
 
     </script>
@@ -102,22 +90,22 @@ EnglishMorphology {
     // Define an operation named 'eval' which evaluates the expression.
     // See https://github.com/cdglabs/ohm/blob/master/doc/api-reference.md#semantics
     var semantics = g.createSemantics().addOperation('eval', {
-        Adj: function(word) {
-            return word;
+        word: function(w) {
+            return w;
         },
-        Noun: function(word) {
-            return word;
-        },
-        Verb: function(word) {
-            return word;
-        },
+        // Noun: function(word) {
+        //     return word;
+        // },
+        // Verb: function(word) {
+        //     return word;
+        // },
     });
 
     document.getElementById('input').value = defaultWord // "commonality"
     document.getElementById('input').onblur = function(e){
     	let word = document.getElementById('input').value 
       let resMap = [];
-      ["Noun","Verb","Adj"].forEach(goal=>{ 
+      ["word"].forEach(goal=>{ 
         let result="";
          result += "\n-----------\n" + goal + "\n---------\n"
   	    let m = g.match(word, goal);
@@ -136,6 +124,7 @@ EnglishMorphology {
             }
             result += "\n" + JSON.stringify(g.trace(word, goal).bindings, null, 2)
         }
+            result += "\n" + g.trace(word, goal).toString()
         resMap.push( {success:success, goal:goal, result:result})
       })
       document.getElementById('result').textContent = resMap.sort((a,b)=>a.success?-1:1).reduce((out, res)=>{ out+=res.goal+" - "+res.success+"\n"; return out; }, "") + resMap.sort((a,b)=>a.success?-1:1).reduce((out, res)=>{ out+=res.result; return out; }, "");

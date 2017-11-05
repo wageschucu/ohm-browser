@@ -16,3 +16,320 @@ prefix = "re"
 	| "under"
 
 stem = letter+
+
+
+what i want
+
+peel off affixes in any order 
+  could start with pos: 
+  
+non-terminals
+  v
+  n
+  a
+  d
+
+terminals
+  f
+  p pre
+  s suf
+  ?s - v,a,n,av stem
+  t tense
+  c conjugation
+  p plural
+http://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html
+
+  */g - generic	
+
+  v <= a sf-va
+  v = pf-vv v
+  v = pf-g v
+  // RBR, RB , RBS
+  // DT, CD, CC, NNS, NN, NNP, NNPS,PDT
+  VB	Verb, base form
+28.	VBD	Verb, past tense
+29.	VBG	Verb, gerund or present participle
+30.	VBN	Verb, past participle
+31.	VBP	Verb, non-3rd person singular present
+32.	VBZ	Verb, 3rd person singular present
+
+// prod-nonterm => nonterm suf/prod
+  {
+	  noun-pps : "'s" ,
+	  nps : "es,s" ,
+	  vts : "ed,d" ,
+	  vcs : "es,s" ,
+	  vns : "ize,iza" ,
+	  noun-verb-suffix : "ion" ,
+	  ans : "al" ,
+	  ggp : "re,inter",
+	  vvp :"be",
+	  vnp :"be",
+	  vs:"nat:nasc,move,be",
+	  ns:"house,man,car",
+	  us : isPhonologicallyCorrect,
+
+  }
+
+  function isPhonologicallyCorrect(string) {
+  	// c*n+c*
+  	return (true) && string.length>1
+  }
+
+
+  input-match: 
+  	strings
+  	constraints:must be phonologically correct: min length, correct formation: clusters,nucleaus rules
+  	match(input-string, is-suf-pref?) => length matched
+  	node: rule, input, parent, children
+
+  	apply rules
+  	search all paths, tree variants, select best tree(s)
+  	following all matches
+
+node:
+  	value
+  	children
+  	parent
+  	isTerminal - is parent terminal node from rule application
+  	branches
+
+rule:
+	string,constraint:phonological conform rules
+	match(node)=>null,branch-node (contains one child terminal and optional non-terminal child node)
+	prefix,suffix,stem
+
+parse algo:
+	descend until all children are terminals and rules applied
+
+
+//print all tree branches
+//	at each branch: dup parent tree rendition and continue
+function printTrees(node, depth) {
+	depth = depth||0
+	trees=[]
+	let string = tabs(depth)+node.value + "\n"
+	_(node.branches).map(subnode=>{
+		trees.push(string+printTrees(subnode, depth+1))
+	})
+	return trees
+}
+
+rating trees:
+	number of known stems, number of rules
+	does it match proposed goal 
+	length of terminal?? 
+
+
+function createTerminal(nonterminal, terminal)
+{
+	let start={value:nonterminal}
+	let terminal={value:terminal, parent:start}
+	start.children=[terminal]
+	start.branches=[]
+	terminal.branches=[]
+	return start;
+}
+let start = createTerminal("noun", "national") 
+
+function isTerminal(node) {
+	return 
+		! isString(node) 
+	||
+		(node && node.children && node.children.length==1 && (!node.children[0].children || !node.children[0].children.length)) 	
+}
+function isString(node) {
+	return 
+		!(node && node.children && node.children.length>0 ) 
+}
+function normalizeRules(rules) {
+	let newRules = {}
+	_.map(rules, (value,key)=> {
+		newRules[key] = value.split(",")
+		_.map(newRules[key], (subvalue,subkey)=> {
+			newRules[key][subkey] = value.split(":")			
+		})
+
+	})
+	return newRules;	
+}
+function matchRule(start, ruleName, rule) {
+	if (!isTerminal(start)) return 
+	let product;
+	let matched;
+
+	if (typeof rule=="function") {
+		matched=rule(start)
+	}
+	else {
+		let names = ruleName.split("-")
+		let prod=name[0]
+		let =name[0]
+		let affix = names.length>2 && names[2]
+		let symbol = start.value
+		let string = start.children[0].value
+		if (prod==symbol) {
+			if (affix) {
+				let index,subindex,rest = searchRule(rule, string,affix)
+				if (index!==undefined) {
+					product = defineProduct(start,symbol,rest, affix, rule[index][subindex])
+				}
+				
+			}
+			else {
+				let index,subindex = searchRule(rule, string)
+				if (index!==undefined) {
+					product = start,symbol,rule[index][subindex]
+				}
+			}
+		}
+
+	}
+	// =>null,branch-node (contains one child terminal and optional non-terminal child node)
+	return product
+}
+
+function morphParse(start, rules) {
+	_.map(rules, (rule,ruleName)=> {
+		let product=matchRule(start, ruleName, rule)
+		if (product) {
+			start.branches.push(product)
+			morphParse(product, rules) 
+		}
+	})
+}
+
+let tree = morphParse(start, normalizeRules(rules))
+
+
+  	national
+
+  		adj 
+  	n   	   sf-an 
+v   sf-na       al 
+vs   ion        
+
+nat
+
+1
+adj
+nation
+
+2
+rule:adj => n sf-an:-al
+adj
+n        sf-an
+nation   al 
+
+3
+rule:n=> n v f-na:-ion
+  		adj 
+  	n   	   sf-an 
+v   sf-na       al 
+nat   ion        
+
+4
+rule:v => vs:nat
+  		adj 
+  	n   	   sf-an 
+v   sf-na       al 
+vs   ion        
+nat
+
+
+  	vs  sf-na sf-an
+  	nat ion al
+
+vs 
+nasc
+
+vs
+vs end-vs-t-sc
+na  t
+
+adj 
+vs avs
+nasc ent
+
+vsv
+nat
+nasc
+
+vs <-nat 
+nat <- nasc
+vs <- nat 
+
+
+
+EnglishMorphology {
+
+  Verb = 
+    | GenericPrefix Verb -- gvprefix
+    | Adj AdjToVerbSuffix -- vcomplexs
+    | Verb VerbConjugationSuffix -- vconjugation
+    | Verb VerbTenseSuffix -- vtense
+    | UnknownVerbStem -- uvsimple
+    | KnownVerbStem -- kvsimple
+
+  Noun = 
+    | GenericPrefix Noun -- gnprefix
+    | Noun NounPluralSuffix -- nplural
+    | Verb VerbToNounSuffix -- ncomplexs
+    | UnknownNounStem -- unsimple
+    | KnownNounStem -- knsimple
+
+  Adj = 
+    | Noun NounToAdjSuffix -- acomplexs
+
+  GenericPrefix = 
+    | "inter"
+    | "re"
+
+  NounToAdjSuffix = 
+    | "al"
+
+  NounPluralSuffix = 
+    | "es"
+    | "s"
+
+  VerbTenseSuffix = 
+    | "ed"
+    | "d"
+
+  VerbConjugationSuffix = 
+    | "es"
+    | "s"
+
+  AdjToVerbSuffix = 
+    | "ize"
+    | "iz"
+
+  VerbToNounSuffix = 
+    | "ation"
+
+  NounStem = 
+    | KnownNounStem  
+    | UnknownNounStem  
+
+  KnownNounStem = 
+    | "xxx"
+
+  VerbStem = 
+    | KnownVerbStem  
+    | UnknownVerbStem  
+
+  KnownVerbStem = 
+    | "move"
+    | "nat"
+
+  UnknownNounStem = NounLetters
+  NounLetters = NounLetter+
+  NounLetter =  ~(NounToAdjSuffix | NounPluralSuffix) ALetter
+
+  UnknownVerbStem = VerbLetters
+  VerbLetters = VerbLetter+
+  VerbLetter =  ~(VerbConjugationSuffix | VerbToNounSuffix) ALetter
+
+  ALetter = letter
+}
+
