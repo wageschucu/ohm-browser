@@ -53,21 +53,21 @@ http://www.ling.upenn.edu/courses/Fall_2003/ling001/penn_treebank_pos.html
 31.	VBP	Verb, non-3rd person singular present
 32.	VBZ	Verb, 3rd person singular present
 
-// prod-nonterm => nonterm suf/prod
+// prod-nonterm => nonterm (suf/prod)
   {
-	  noun-pps : "'s" ,
-	  nps : "es,s" ,
-	  vts : "ed,d" ,
-	  vcs : "es,s" ,
-	  vns : "ize,iza" ,
+	  noun-possive-suffix : "'s" ,
+	  noun-plural-suffix : "es,s" ,
+	  verb-tense-suffix : "ed,d" ,
+	  verb-conjugation-suffix  : "es,s" ,
+	  verb-noun-suffix : "ize,iza" ,
 	  noun-verb-suffix : "ion" ,
-	  ans : "al" ,
-	  ggp : "re,inter",
-	  vvp :"be",
-	  vnp :"be",
-	  vs:"nat:nasc,move,be",
-	  ns:"house,man,car",
-	  us : isPhonologicallyCorrect,
+	  adj-noun-suffix : "al" ,
+	  noun-possive-prefix : "re,inter",
+	  verb-verb-prefix :"be",
+	  verb-noun-prefix :"be",
+	  verb-stem:"nat:nasc,move,be",
+	  noun-stem:"house,man,car",
+	  unknown-stem : isPhonologicallyCorrect,
 
   }
 
