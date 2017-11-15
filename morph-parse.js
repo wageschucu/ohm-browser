@@ -1,5 +1,13 @@
 //morph-parse.js
 
+// todo
+//.  create branching at prefix level if two match 
+//		need to try all prefixes: tion, ion zB nation
+// how to match pos non-terminals to rules below: verb_verb_suffix_tense to only participle or past tense verbs 
+// 		tense and conj are pos/syntaxtic attributes
+// 		!interesting: a nested layer in morphology: words, syntax attribs(tense,conjug),word morphology(level 1: compounds, level 2: suffixes,prefixes; then nesting)
+// done: has extra node: rate unknown stem last/lower
+
 
 function tabs(depth) {
 	let res=""
@@ -199,13 +207,13 @@ let nonterminals = [ "noun","verb" ,"adj", "adv" ,"prep"  ]
 
 // prod-nonterm => nonterm (suf/prod)
 let rules = {
-        noun_verb_suffix: "tion,ion",
+        noun_verb_suffix: "ion, tion",
     	noun_possive_suffix: "'s",
         noun_plural_suffix: "es,s",
         verb_verb_prefix: "re,inter",
         verb_stem: "nat:nasc,move,be",
-        verb_verb_suffix_tense: "ed,d",
-        verb_verb_suffix_conjugation: "es,s",
+        verb_verb_suffix_tense: "ed,d", // these are pos attributes
+        verb_verb_suffix_conjugation: "es,s",// these are pos attributes
         verb_adj_suffix: "ize,iza,iz",
         adj_noun_suffix: "al",
         adv_adj_suffix: "ly",
@@ -217,7 +225,7 @@ let rules = {
 var trees = [] ;
 
 _(nonterminals).each(nonterminal=>{
-	let start = createNode(nonterminal, "nationalization")
+	let start = createNode(nonterminal, "nationalized")
 
 	let tree = morphParse(start, normalizeRules(rules))
 	trees.push(tree)
