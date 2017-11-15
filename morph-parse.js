@@ -7,27 +7,42 @@ function tabs(depth) {
 		res+="  "
 	return res
 }
-//print all tree children
-//	at each branch: dup parent tree rendition and continue
-function printTreeStrings(string) {
-	console.log(string)
+
+function treeToString(node, pretty, depth=0) {
+	if (!node) return "";
+	depth++
+	return (pretty?"\n"+tabs(depth):"") + " ( "+node.symbol+" : "+ 
+	(node.children?
+		(  node.children.reduce((string, child)=>string+=treeToString(child, pretty, depth) , "") )
+		+(pretty?"\n"+tabs(depth):"") 
+		: 
+		node.string
+	)
+	 +" ) " 
 }
-function getTreeStrings(node, depth) {
-    depth = depth || 0
-    let string = ""
-    string +=  " ( "+ node.symbol 
-    _(node.children).each((branch, branchIndex) => {
-		if (node.children.length>1) 
-			string +=  "\n"+tabs(depth) 
-	    _(branch).each((subnode, index) => {
-	        string += getTreeStrings(subnode, depth + 1 )
+function extractTrees(nodes) {
+	let trees = []
+	nodes.forEach(node=> {
+	    _(node.children).forEach((branch) => {
+	    	trees[trees.push(cloneNode(node))-1].children=extractTrees(branch)
 	    })
+	    if (!node.children)
+		    trees.push(node)
     })
-	if (!node.children || ! node.children.length) {
-	    string += " : "+node.string
-	}
-	string +=   " ) "
-    return string
+	return trees;
+}
+
+function rateTree(node) {
+	if (!node) return 0;
+	let ret = 1+ 
+	(node.children?
+		node.children.reduce((rating, child)=>{ 
+			return rating+=rateTree(child) 
+		}, 0) 
+		: 
+		0
+	)
+	return ret
 }
 
 // rating trees:
@@ -39,6 +54,11 @@ function getTreeStrings(node, depth) {
 function createNode(symbol, string) {
     let node = { symbol: symbol , string : string }
     return node;
+}
+
+function cloneNode(node) {
+    let newnode = { symbol: node.symbol , string : node.string }
+    return newnode;
 }
 
 function isTerminal(node) {
@@ -192,13 +212,23 @@ let rules = {
         verb_noun_prefix: "be",
         noun_stem: "house,man,car",
         //unknown_unknownstem: isStemPhonologicallyCorrect,
-
 }
+
+var trees = [] ;
 
 _(nonterminals).each(nonterminal=>{
 	let start = createNode(nonterminal, "nationalization")
 
 	let tree = morphParse(start, normalizeRules(rules))
-	let treeStrings = getTreeStrings(tree)
-	printTreeStrings(treeStrings)
+	trees.push(tree)
+
 })
+
+let ratedTrees=extractTrees(trees).map(tree=>[rateTree(tree), treeToString(tree, true)]).sort((a,b)=>b[0]-a[0])
+ratedTrees.forEach(ratedTree=>console.log(ratedTree[0], ratedTree[1]))
+
+
+//trees.push(morphParse(createNode("noun", "nation"), normalizeRules(rules)))
+//let treeStrings = getTreeStrings(trees[0])
+//printTreeStrings(treeStrings)
+
