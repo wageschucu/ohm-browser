@@ -28,15 +28,23 @@ function treeToString(node, pretty, depth=0) {
 	)
 	 +" ) " 
 }
-function extractTrees(nodes) {
+?? still dont get it!!!
+function extractTrees(branches) {
 	let trees = []
-	nodes.forEach(node=> {
-	    _(node.children).forEach((branch) => {
-	    	trees[trees.push(cloneNode(node))-1].children=extractTrees(branch)
+	branches.forEach(branch=>{
+		let tree=[]
+		trees.push(tree)
+		branch.forEach(node=>{
+		    if (!node.children)
+			    tree.push(node)
+			else {
+				extractTrees(node.children).forEach(branch=>{
+					tree[tree.push(cloneNode(node))-1].children=[branch] 		
+				})
+			}
 	    })
-	    if (!node.children)
-		    trees.push(node)
-    })
+	    if (tree.length) trees.push(tree)
+	})
 	return trees;
 }
 
@@ -94,8 +102,8 @@ function normalizeRules(rules) {
 
 function matchRule(start, ruleName, rule) {
     if (isTerminal(start)) 
-    	return
-    let product;
+    	return []
+    let products=[];
     let matched;
 
     let names = ruleName.split("_")
@@ -108,20 +116,21 @@ function matchRule(start, ruleName, rule) {
     if (prod == symbol || "unknown" == prod) {
 	    if (typeof rule == "function") {
 	        if (rule(start))
-	            product = defineProduct( nonterminal, string)
+	            products.push(defineProduct( nonterminal, string))
 	    } else {
-            let {index, subindex, rest} = searchRule(rule, string, affixType)
-            if (index !== undefined) {
+            //let {index, subindex, rest}
+            let itemIndexes = searchRule(rule, string, affixType)
+            itemIndexes.forEach( itemIndex => {
             	let var_ruleName = ruleName
             	// check for stem variation
-            	if (!affixType && subindex)
-            		var_ruleName += ":"+rule[index][0]
-                product = defineProduct(nonterminal, rest, affixType, rule[index][subindex], var_ruleName)
-            }
+            	if (!affixType && itemIndex.subindex)
+            		var_ruleName += ":"+rule[itemIndex.index][0]
+                products.push( defineProduct(nonterminal, itemIndex.rest, affixType, rule[itemIndex.index][itemIndex.subindex], var_ruleName))
+            })
         }
     }
     // =>null,branch-node (contains one child terminal and optional non-terminal child node)
-    return product
+    return products
 }
 
 function defineProduct(nonterminal, rest, affixType, affix,ruleName) {
@@ -146,15 +155,14 @@ function getAllIndexes(string, val) {
 }
 
 function searchRule(rule, string, affixType) {
-	let index, subindex, rest;
-	let found
+	let index, subindex, rest;	
+	let res = []
     _.map(rule, (type, ind ) => {
-        if (found) return 
         _.map(type, (item, subind) => {
-        	if (found) return 
 
         	_(getAllIndexes(string,item)).each(indexOf=> {
 
+		        let found=false
 	            let newStem;
 	            if (!affixType && indexOf==0 && item.length == string.length)
 	            {
@@ -171,24 +179,25 @@ function searchRule(rule, string, affixType) {
 		            index=ind;
 		            subindex=subind
 		            rest = newStem
+		            res.push({index:index, subindex:subindex, rest:rest})
 		        }
 		    })
         })
     })
 
-	return {index:index, subindex:subindex, rest:rest};
+	return res;
 }
 
 function morphParse(start, rules) {
     _.map(rules, (rule, ruleName) => {
         let products = matchRule(start, ruleName, rule)
-        if (products) {
+        products.forEach(product=>{
         	start.children = start.children || []
-            start.children.push(products)
-            _(products).each(product=> { 
-            	morphParse(product, rules)
+            start.children.push(product)
+            _(product).each(node=> { 
+            	morphParse(node, rules)
             })
-        }
+        })
     })
     return start
 }
@@ -207,7 +216,7 @@ let nonterminals = [ "noun","verb" ,"adj", "adv" ,"prep"  ]
 
 // prod-nonterm => nonterm (suf/prod)
 let rules = {
-        noun_verb_suffix: "ion, tion",
+        noun_verb_suffix: "tion,ion",
     	noun_possive_suffix: "'s",
         noun_plural_suffix: "es,s",
         verb_verb_prefix: "re,inter",
@@ -225,10 +234,10 @@ let rules = {
 var trees = [] ;
 
 _(nonterminals).each(nonterminal=>{
-	let start = createNode(nonterminal, "nationalized")
+	let start = createNode(nonterminal, "national")
 
 	let tree = morphParse(start, normalizeRules(rules))
-	trees.push(tree)
+	trees.push([tree])
 
 })
 
