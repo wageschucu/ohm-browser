@@ -28,22 +28,33 @@ function treeToString(node, pretty, depth=0) {
 	)
 	 +" ) " 
 }
-?? still dont get it!!!
+// ?? still dont get it!!!
+// branch multi by sub branches 
+// branch left and right - product: for left, for right - add tree
+// if one just use, if two , for 
 function extractTrees(branches) {
 	let trees = []
 	branches.forEach(branch=>{
 		let tree=[]
-		trees.push(tree)
 		branch.forEach(node=>{
-		    if (!node.children)
-			    tree.push(node)
+		    if (!node.children) {
+			    tree.push([node])
+		    }
 			else {
-				extractTrees(node.children).forEach(branch=>{
-					tree[tree.push(cloneNode(node))-1].children=[branch] 		
-				})
+				tree.push(extractTrees(node.children))
 			}
 	    })
-	    if (tree.length) trees.push(tree)
+	    if (tree.length==1)
+	    	trees.push(tree)
+	    else if (tree.length==2) {
+	    	tree[0].forEach(left=>{
+		    	tree[1].forEach(right=>{
+		    		trees.push([cloneNode(left),cloneNode(right)])
+		    	})
+	    	})
+	    }
+	    else
+	    	throw "oops tree length is "+tree.length
 	})
 	return trees;
 }
