@@ -214,15 +214,22 @@ function walkCopies(currentNode, cb, head) {
 		cb(head)
 }
 
-function copyBranch(branch) // copy nodes: shallow, copy children point of node only
+function copyBranch(branch, deep) // copy nodes: shallow, copy children point of node only
 {
 	let copy=[]
 	branch.forEach(node=>{
-		let copyNode=cloneNode(node)
+		let copyNode=deep?deepNodeCopy(node):cloneNode(node)
 		copyNode.children = node.children
 		copy.push(copyNode)
 	})
 	return copy
+}
+
+function deepNodeCopy(node) {
+	let clone = cloneNode(node)
+	if (node.children) 
+		clone.children = copyBranch(node.children, true)
+	return clone 
 }
 let nonterminals = [ "noun","verb" ,"adj", "adv" ,"prep"  ]
 let nonterminalsparse = [ "noun" ]
@@ -231,7 +238,7 @@ let nonterminalsparse = [ "noun" ]
 let rules = {
         noun_verb_suffix: "tion,ion",
     	noun_possive_suffix: "'s",
-        noun_plural_suffix: "es,s",
+        noun_noun_suffix_plural: "es,s",
         verb_verb_prefix: "re,inter",
         verb_stem: "nat:nasc,move,be",
         verb_verb_suffix_tense: "ed,d", // these are pos attributes
@@ -245,17 +252,25 @@ let rules = {
 }
 
 var trees = [] ;
+var ratedTrees = [] ;
 
-_(nonterminals).each(nonterminal=>{
-	let start = createNode(nonterminal, "national")
+_(nonterminalsparse).each(nonterminal=>{
+	let start = createNode(nonterminal, "nationalization")
 	let node = morphParse(start, normalizeRules(rules))
-	//console.log(JSON.stringify(node,null,2))
 	walkCopies(node, (node)=>{
-		// console.log(JSON.stringify(node,null,2))
-		console.log(node.string, treeToStringPretty(node))
+		trees.push(deepNodeCopy(node))
 	}) 
+
 })
 
+trees.forEach(node=>{
+	ratedTrees.push([rateTree(node), node])
+})
+ratedTrees.sort((a,b)=>b[0]-a[0])		 
+
+ratedTrees.forEach(ratedTree=>{
+	console.log(ratedTree[0], ratedTree[1].string, treeToStringPretty(ratedTree[1]))
+})
 
 
 // function treeToString2(separatedTrees, pretty, depth=0) {
