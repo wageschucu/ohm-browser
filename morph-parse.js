@@ -31,48 +31,7 @@ function treeToString(node, pretty, depth=0) {
 	)
 	 +" ) " 
 }
-function treeToString2(separatedTrees, pretty, depth=0) {
-	if (!separatedTrees || !separatedTrees.length) return ""
-	depth++
-	return (pretty?"\n"+tabs(depth):"") + " ( "+node.symbol+" : "+ 
-	(node.children?
-		(  node.children.reduce((string, child)=>string+=treeToString(child, pretty, depth) , "") )
-		+(pretty?"\n"+tabs(depth):"") 
-		: 
-		node.string
-	)
-	 +" ) " 
-}
-// ?? still dont get it!!!
-// branch multi by sub branches 
-// branch left and right - product: for left, for right - add tree
-// if one just use, if two , for 
-function extractTrees(branches) {
-	let trees = []
-	branches.forEach(branch=>{
-		let tree=[]
-		branch.forEach(node=>{
-		    if (!node.children) {
-			    tree.push([node])
-		    }
-			else {
-				tree.push(extractTrees(node.children))
-			}
-	    })
-	    if (tree.length==1)
-	    	trees.push(tree)
-	    else if (tree.length==2) {
-	    	tree[0].forEach(left=>{
-		    	tree[1].forEach(right=>{
-		    		trees.push([cloneNode(left),cloneNode(right)])
-		    	})
-	    	})
-	    }
-	    else
-	    	throw "oops tree length is "+tree.length
-	})
-	return trees;
-}
+
 
 function rateTree(node) {
 	if (!node) return 0;
@@ -237,7 +196,34 @@ function isStringPhonologicallyCorrect(string) {
     // c*n+c*
     return string.length > 1 && (true) 
 }
+function walkCopies(currentNode, cb, head) {
+	if (!head) head=currentNode
+	if (currentNode.children) {
+		let branches = currentNode.children
+		currentNode.children = undefined
+		branches.forEach(branch => {
+			if (currentNode.children) 
+				cb(head)
+			currentNode.children=copyBranch(branch) // copy nodes: shallow, copy children point of node, don't clone it
+			currentNode.children.forEach(node => {
+				walkCopies(node, cb, head)
+			})
+		})
+	}
+	if (currentNode==head)
+		cb(head)
+}
 
+function copyBranch(branch) // copy nodes: shallow, copy children point of node only
+{
+	let copy=[]
+	branch.forEach(node=>{
+		let copyNode=cloneNode(node)
+		copyNode.children = node.children
+		copy.push(copyNode)
+	})
+	return copy
+}
 let nonterminals = [ "noun","verb" ,"adj", "adv" ,"prep"  ]
 let nonterminalsparse = [ "noun" ]
 
@@ -260,179 +246,58 @@ let rules = {
 
 var trees = [] ;
 
-_(nonterminalsparse).each(nonterminal=>{
-	let start = createNode(nonterminal, "nation")
+_(nonterminals).each(nonterminal=>{
+	let start = createNode(nonterminal, "national")
 	let node = morphParse(start, normalizeRules(rules))
-	console.log(JSON.stringify(node,null,2))
-	//let separatedTree=separateTree(node)
-	walkCopies(node, cloneNode(node), (node)=>{
-		console.log(JSON.stringify(node,null,2))
+	//console.log(JSON.stringify(node,null,2))
+	walkCopies(node, (node)=>{
+		// console.log(JSON.stringify(node,null,2))
+		console.log(node.string, treeToStringPretty(node))
 	}) 
-	//console.log(JSON.stringify(separatedTree,null,2))
-	//let string = separatedTreeToString(separatedTree)
 })
 
-//let ratedTrees=extractTrees(trees).map(tree=>[rateTree(tree), treeToString(tree, true)]).sort((a,b)=>b[0]-a[0])
-//ratedTrees.forEach(ratedTree=>console.log(ratedTree[0], ratedTree[1]))
-// branch, node, branches, tree
-// trees:[tree,...], tree:[node,...], node 
-// 
-// separateNode(node) // node=> <=[[node,...]]
-//	 let trees=separateTrees(node.children).map(tree=>{
-// 		let newNode=cloneNode(node); 
-//		newNode.children=tree;
-//		return [newNode]
-//   })
-//   return trees.length?trees:[[node]]
 
-// separateTrees(trees) // [[node,...]]=> <=[[node,...]]
-//   if(trees===undefined) return []
-//   let separatedTrees=[]
-//   trees.forEach(tree=>{
-//	    separatedTrees.concat(productTree(separateTree(tree)))
-//   })
-//   return separatedTrees
-// 
-// productTree(trees) { // [[node,...]]=><=[[node,...]]
-//    if (trees.length==1)	
-//	  	return trees
-//    else if(trees.length==2)
-//    { let separatedTrees=[]
-//		trees[0].forEach(left=>{
-//			trees[1].forEach(right=>{
-//				separatedTrees.push([left,right])
-//  	    })	
-//      })	
-//      return separatedTrees
-//   }
-//    else
-//      throw "tree.length="+tree.length
+
+// function treeToString2(separatedTrees, pretty, depth=0) {
+// 	if (!separatedTrees || !separatedTrees.length) return ""
+// 	depth++
+// 	return (pretty?"\n"+tabs(depth):"") + " ( "+node.symbol+" : "+ 
+// 	(node.children?
+// 		(  node.children.reduce((string, child)=>string+=treeToString(child, pretty, depth) , "") )
+// 		+(pretty?"\n"+tabs(depth):"") 
+// 		: 
+// 		node.string
+// 	)
+// 	 +" ) " 
 // }
-
-// separateTree(tree) // [node]=><=[[node,...]] 
-//   let separatedTrees=[]
-//	 tree.forEach(node=>{
-// 		separatedTrees.push(separateNode(node))
-//   })
-//   return separatedTrees
-//	
-// 	
-
-// flattenSeparatedTrees(// separatedTrees) {separatedTrees=> <=flattenedSeparatedTrees
-//   separatedTrees.forEach(separatedTree=>flattenSeparatedTree(separatedTree))
-//   return separatedTrees[0]	
-// }
-// flattenSeparatedTree(separatedTree)
-//	separatedTree.forEach(node=>flattenNode(node))
-//
-// flattenNode(node)
-
-
-//		tree=>subnode
-// 			separateTrees(subnode) => lists => multiply(lists) => trees=>map=>node+tree
-//   else 
-// 		trees.push([node])
-
-// count tree versions
-//   make map of branches - node numbers, concatinated
-//   permutate??
-//   count branches 
-//    depth first, width second
-//    collect/copy result
-//    []->[->[],->[]] replace->[], finished with one when next it found, or end of last is found
-//   look at branches -> [[]]-> forEach(branch=> 
-//.       branch->node->decendNode(node) -> children :look at branches
-//.       copy , head -copy from head, 
-//.       replace branch from copy tree - node.children -> node 
-
-function walkCopies(currentNode, head, cb) {
-	if (currentNode.children) {
-		let branches = currentNode.children
-		currentNode.children = undefined
-		branches.forEach(branch => {
-			if (currentNode.children) 
-				cb(head)
-			currentNode.children=copyBranch(branch) // copy nodes: shallow, copy children point of node only
-			branch.forEach(node => {
-				walkCopies(node, head, cb)
-			})
-		})
-	}
-	if (currentNode==head)
-		cb(head)
-}
-
-function copyBranch(branch) // copy nodes: shallow, copy children point of node only
-{
-	let copy=[]
-	branch.forEach(node=>{
-		let copyNode=cloneNode(node)
-		copyNode.children = node.children
-		copy.push(copyNode)
-	})
-	return copy
-}
-
-// function separateTree(node) {
-// 	let separatedTree=[]
-// 	if (node.children ) {
-// 		node.children.forEach(tree=>{
-
-// 		})
-// 			separateTrees(node).forEach(subSeparatedTree=>{
-// 				let newNode=cloneNode(node)
-// 				newNode.children=subSeparatedTree
-// 				separatedTree.push(newNode) 
-// 			})	
-
-// 		node.children.forEach(tree=>{
-// 			tree.forEach(node => {
-// 				separateTrees(node).forEach(subSeparatedTree=>{
-// 					let newNode=cloneNode(node)
-// 					newNode.children=subSeparatedTree
-// 					separatedTree.push(newNode) 
-// 				})	
-
-// 			})
-// 		})
-// 	}
-// 	else 
-// 		separatedTree.push(node)
-// 	return separatedTree
-// }
-// function separateTrees(trees) { 
-// 	let separatedTrees=[]
-// 	trees.forEach(tree=>{
-// 		let separatedTree=[]
-// 		tree.forEach(node=>{
-// 			if (node.children && node.children.length) {
-// 				separateTrees(node.children).forEach(tree=>{
-// 					let newNode=cloneNode(node)
-// 					newNode.children=[tree]
-// 					separatedTree.push(newNode) 
-// 				})
+// // ?? still dont get it!!!
+// // branch multi by sub branches 
+// // branch left and right - product: for left, for right - add tree
+// // if one just use, if two , for 
+// function extractTrees(branches) {
+// 	let trees = []
+// 	branches.forEach(branch=>{
+// 		let tree=[]
+// 		branch.forEach(node=>{
+// 		    if (!node.children) {
+// 			    tree.push([node])
+// 		    }
+// 			else {
+// 				tree.push(extractTrees(node.children))
 // 			}
-// 			else 
-// 				separatedTree.push(node)
-// 		})
-// 		separatedTrees.push(separatedTree)		
+// 	    })
+// 	    if (tree.length==1)
+// 	    	trees.push(tree)
+// 	    else if (tree.length==2) {
+// 	    	tree[0].forEach(left=>{
+// 		    	tree[1].forEach(right=>{
+// 		    		trees.push([cloneNode(left),cloneNode(right)])
+// 		    	})
+// 	    	})
+// 	    }
+// 	    else
+// 	    	throw "oops tree length is "+tree.length
 // 	})
-// 	return separatedTrees 
+// 	return trees;
 // }
-
-// function flattenTrees(separatedTrees) {
-// 	let flattenedTrees=[]
-// 	separatedTrees.forEach(separatedTree=>{
-// 		separatedTree.forEach(node=>{
-// 			if (node.children&&node.children.length)
-// 				node.children=flattenTrees(node.children)
-// 		})		
-// 		flattenedTrees=	separatedTree
-// 	})
-// 	return flattenedTrees
-// }
-
-//trees.push(morphParse(createNode("noun", "nation"), normalizeRules(rules)))
-//let treeStrings = getTreeStrings(trees[0])
-//printTreeStrings(treeStrings)
 
