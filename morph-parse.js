@@ -260,7 +260,6 @@ _(nonterminalsparse).each(nonterminal=>{
 	walkCopies(node, (node)=>{
 		trees.push(deepNodeCopy(node))
 	}) 
-
 })
 
 trees.forEach(node=>{
